@@ -1,0 +1,120 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
+
+.navbar .brand {
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.navbar a {
+  text-decoration: none;
+  color: #444;
+}
+
+.navbar a.active {
+  color: #1a5fb4;
+  font-weight: 600;
+}
+
+.navbar .spacer {
+  flex: 1;
+}
+
+.navbar .user-email {
+  color: #777;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 24px 48px;
+}
+
+.page.narrow {
+  max-width: 480px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 420px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-inline {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.form-inline label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f0f1f3;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actions input {
+  max-width: 140px;
+}
+
+.error {
+  color: #b00020;
+  background: #fdecec;
+  border: 1px solid #f5c2c2;
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.success {
+  color: #14632a;
+  background: #e8f7ec;
+  border: 1px solid #bfe5c9;
+  border-radius: 4px;
+  padding: 8px 12px;
+}

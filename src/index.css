@@ -1,0 +1,46 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  color: #222;
+  background: #f6f7f9;
+}
+
+h1 {
+  font-size: 26px;
+}
+
+h2 {
+  font-size: 19px;
+  margin-top: 32px;
+}
+
+a {
+  color: #1a5fb4;
+}
+
+button {
+  font: inherit;
+  padding: 5px 12px;
+  cursor: pointer;
+  border: 1px solid #999;
+  border-radius: 4px;
+  background: #fff;
+}
+
+button:hover {
+  background: #eee;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+}
