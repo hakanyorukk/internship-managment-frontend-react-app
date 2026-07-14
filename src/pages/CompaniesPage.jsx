@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { handleLogError, getErrorMessage } from "../lib/helpers";
+import { useAuth } from "../context/AuthContext";
 
 function CompaniesPage() {
   const [companies, setCompanies] = useState([]);
@@ -12,6 +13,8 @@ function CompaniesPage() {
   const [description, setDescription] = useState("");
   const [city, setCity] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   const loadCompanies = async () => {
     try {
@@ -101,33 +104,38 @@ function CompaniesPage() {
         </table>
       )}
 
-      <h2>Create company</h2>
-      <form className="form" onSubmit={handleCreate}>
-        <label>
-          Name
-          <input value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label>
-          Description
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        <label>
-          City
-          <input value={city} onChange={(e) => setCity(e.target.value)} />
-        </label>
-        <label>
-          Contact email
-          <input
-            type="email"
-            value={contactEmail}
-            onChange={(e) => setContactEmail(e.target.value)}
-          />
-        </label>
-        <button type="submit">Create</button>
-      </form>
+      {isAdmin && (
+        <>
+          <h2>Create company</h2>
+
+          <form className="form" onSubmit={handleCreate}>
+            <label>
+              Name
+              <input value={name} onChange={(e) => setName(e.target.value)} />
+            </label>
+            <label>
+              Description
+              <input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </label>
+            <label>
+              City
+              <input value={city} onChange={(e) => setCity(e.target.value)} />
+            </label>
+            <label>
+              Contact email
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+              />
+            </label>
+            <button type="submit">Create</button>
+          </form>
+        </>
+      )}
     </div>
   );
 }

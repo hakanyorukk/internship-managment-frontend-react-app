@@ -14,16 +14,15 @@ function HomePage() {
           </p>
           <ul>
             <li>
-              <Link to="/companies">Companies</Link> — browse and create
-              companies
+              <Link to="/companies">Companies</Link> browse and create companies
             </li>
             <li>
-              <Link to="/internships">Internships</Link> — browse offers,
-              create offers, apply
+              <Link to="/internships">Internships</Link> browse offers, create
+              offers, apply
             </li>
             <li>
-              <Link to="/applications">Applications</Link> — view applications
-              and update their status
+              <Link to="/applications">Applications</Link> view applications and
+              update their status
             </li>
           </ul>
         </>

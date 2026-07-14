@@ -23,9 +23,11 @@ function LoginPage() {
     try {
       const response = await api.login(email, password);
       const token = response.data; // backend returns the raw JWT string
+
       const claims = parseJwt(token);
       Auth.userLogin({
         email: (claims && claims.sub) || email,
+        role: claims && claims.role,
         token,
         exp: claims && claims.exp,
       });

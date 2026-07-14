@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { handleLogError, getErrorMessage } from "../lib/helpers";
+import { useAuth } from "../context/AuthContext";
 
 function InternshipsPage() {
   const [offers, setOffers] = useState([]);
@@ -26,6 +27,10 @@ function InternshipsPage() {
   const [deadline, setDeadline] = useState("");
   const [companyId, setCompanyId] = useState("");
   const [workTypes, setWorkTypes] = useState([]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
+  const isStudent = user?.role === "STUDENT";
+  const isCompany = user?.role === "COMPANY";
 
   const loadOffers = async (filterCompanyId) => {
     try {
@@ -215,18 +220,29 @@ function InternshipsPage() {
                 <td>{offer.status}</td>
                 <td>{offer.requiredSkills}</td>
                 <td className="actions">
-                  <button
-                    onClick={() => {
-                      setApplicationsOffer(null);
-                      setApplyOffer(offer);
-                    }}
-                  >
-                    Apply
-                  </button>
-                  <button onClick={() => handleShowApplications(offer)}>
-                    Applications
-                  </button>
-                  <button onClick={() => handleDelete(offer)}>Delete</button>
+                  {isStudent && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setApplicationsOffer(null);
+                          setApplyOffer(offer);
+                        }}
+                      >
+                        Apply
+                      </button>
+                    </>
+                  )}
+
+                  {isCompany && (
+                    <>
+                      <button onClick={() => handleDelete(offer)}>
+                        Delete
+                      </button>
+                      <button onClick={() => handleShowApplications(offer)}>
+                        Applications
+                      </button>
+                    </>
+                  )}
                 </td>
               </tr>
             ))}
@@ -303,62 +319,65 @@ function InternshipsPage() {
           <button onClick={() => setApplicationsOffer(null)}>Close</button>
         </>
       )}
-
-      <h2>Create offer</h2>
-      <form className="form" onSubmit={handleCreate}>
-        <label>
-          Title
-          <input value={title} onChange={(e) => setTitle(e.target.value)} />
-        </label>
-        <label>
-          Description
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </label>
-        <label>
-          Required skills
-          <input
-            value={requiredSkills}
-            onChange={(e) => setRequiredSkills(e.target.value)}
-          />
-        </label>
-        <label>
-          Location
-          <input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-          />
-        </label>
-        <label>
-          Work type
-          <select value={type} onChange={(e) => setType(e.target.value)}>
-            {workTypes.map((w) => (
-              <option key={w.value} value={w.value}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Deadline
-          <input
-            type="date"
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-          />
-        </label>
-        <label>
-          Company id
-          <input
-            type="number"
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-          />
-        </label>
-        <button type="submit">Create</button>
-      </form>
+      {isAdmin && (
+        <>
+          <h2>Create offer</h2>
+          <form className="form" onSubmit={handleCreate}>
+            <label>
+              Title
+              <input value={title} onChange={(e) => setTitle(e.target.value)} />
+            </label>
+            <label>
+              Description
+              <input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </label>
+            <label>
+              Required skills
+              <input
+                value={requiredSkills}
+                onChange={(e) => setRequiredSkills(e.target.value)}
+              />
+            </label>
+            <label>
+              Location
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </label>
+            <label>
+              Work type
+              <select value={type} onChange={(e) => setType(e.target.value)}>
+                {workTypes.map((w) => (
+                  <option key={w.value} value={w.value}>
+                    {w.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Deadline
+              <input
+                type="date"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </label>
+            <label>
+              Company id
+              <input
+                type="number"
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+              />
+            </label>
+            <button type="submit">Create</button>
+          </form>
+        </>
+      )}
     </div>
   );
 }
