@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { handleLogError, getErrorMessage } from "../lib/helpers";
+//import { useAuth } from "../context/AuthContext";
 
 function ApplicationRow({ application, statuses, onStatusUpdated, onError }) {
   const [status, setStatus] = useState(application.status);
   const [comment, setComment] = useState(application.comment || "");
+  //const { user } = useAuth();
 
   const handleUpdate = async () => {
     try {
-      const response = await api.updateApplicationStatus(
-        application.id,
-        { status, comment }
-      );
+      const response = await api.updateApplicationStatus(application.id, {
+        status,
+        comment,
+      });
       onStatusUpdated(response.data);
     } catch (error) {
       handleLogError(error);
@@ -114,8 +116,8 @@ function ApplicationsPage() {
     setMessage(`Application #${updated.id} updated to ${updated.status}.`);
     setApplications((current) =>
       current.map((application) =>
-        application.id === updated.id ? updated : application
-      )
+        application.id === updated.id ? updated : application,
+      ),
     );
   };
 
