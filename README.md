@@ -1,7 +1,7 @@
 # internship-frontend
 
 React frontend for the `sit-internship-management-project` Spring Boot backend.
-Built with Vite, React Router and axios — plain CSS, no UI library.
+Built with Vite, React Router and axios plain CSS, no UI library.
 
 ## Pages
 
