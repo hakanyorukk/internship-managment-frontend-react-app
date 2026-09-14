@@ -59,3 +59,13 @@ setup is needed on the backend.
 - Known backend limitations: creating a company and creating/editing an offer currently
   fail validation (`CompanyRequest.id` and `InternshipOfferRequest.companyId` are required
   but should not be); there is no endpoint to close an offer.
+
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/3b288a76-a717-4684-b1d9-17511c293a52" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/542b3c3e-100e-4b04-b76c-7bad45494916" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/b74e98b5-b763-45fe-b749-79c8e67d6fd9" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/9172788c-80b8-43a2-be08-5bd35b8ca544" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/56f7ecc5-e081-42fc-9cda-6c51fe284ed6" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/b20d92f6-5942-4689-9a6c-27c230b70c74" />
+<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/a0a85bc4-5eba-4034-b13e-57b326710431" />
+
+
