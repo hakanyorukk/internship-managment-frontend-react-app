@@ -13,6 +13,7 @@ Every page shows only what the logged-in role is allowed to do (the backend chec
 | `/applications` | own applications with status and company comment | applications to own offers, change status + comment | see all applications |
 | `/companies` | list | register own company | accept / reject companies |
 | `/profile` | edit faculty number, specialty, course, skills | — | — |
+| `/` (home) | quick links | quick links | platform statistics + quick links |
 
 `/login` and `/register` use `POST /api/auth/login` and `POST /api/auth/register`.
 
@@ -57,4 +58,4 @@ setup is needed on the backend.
 - Search and filters on the internships page run in the browser on the loaded list.
 - Known backend limitations: creating a company and creating/editing an offer currently
   fail validation (`CompanyRequest.id` and `InternshipOfferRequest.companyId` are required
-  but should not be); there is no endpoint to close an offer or for admin statistics.
+  but should not be); there is no endpoint to close an offer.
