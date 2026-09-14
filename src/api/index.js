@@ -8,21 +8,27 @@ export const api = {
   // -- companies
   getCompanies: () => client.get("/companies"),
   createCompany: (company) => client.post("/companies", company),
+  updateCompanyRegistration: (id, status) =>
+    client.patch(`/companies/${id}/registration`, null, { params: { status } }),
 
   // -- internships
-  getInternships: (companyId) =>
-    client.get("/internships", { params: companyId ? { companyId } : {} }),
+  getInternships: () => client.get("/internships"),
+  getMyInternships: () => client.get("/internships/my"),
   createInternship: (offer) => client.post("/internships", offer),
+  updateInternship: (id, offer) => client.put(`/internships/${id}`, offer),
   deleteInternship: (id) => client.delete(`/internships/${id}`),
   getOfferApplications: (id) => client.get(`/internships/${id}/applications`),
 
   // -- applications
   getApplications: () => client.get("/applications"),
-  getMyApplications: (studentId) =>
-    client.get("/applications/my", { params: { studentId } }),
+  getMyApplications: () => client.get("/applications/my"),
   createApplication: (application) => client.post("/applications", application),
   updateApplicationStatus: (id, statusUpdate) =>
     client.patch(`/applications/${id}/status`, statusUpdate),
+
+  // -- student profile
+  getMyProfile: () => client.get("/students/me"),
+  updateMyProfile: (profile) => client.put("/students/me", profile),
 
   // -- enums (each returns [{ value, label }])
   getWorkTypes: () => client.get("/enums/work-types"),

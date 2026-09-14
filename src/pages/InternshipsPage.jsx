@@ -1,381 +1,410 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { handleLogError, getErrorMessage } from "../lib/helpers";
+import {
+  handleLogError,
+  getErrorMessage,
+  formatEnum,
+  formatDate,
+} from "../lib/helpers";
 import { useAuth } from "../context/AuthContext";
+import StatusBadge from "../components/StatusBadge";
+
+const emptyOffer = {
+  title: "",
+  description: "",
+  requiredSkills: "",
+  location: "",
+  type: "ON_SITE",
+  deadline: "",
+};
+
+const emptyFilters = { keyword: "", city: "", type: "", skill: "" };
+
+// case-insensitive "text contains search"; an empty search matches everything
+function contains(text, search) {
+  return (text || "").toLowerCase().includes(search.trim().toLowerCase());
+}
+
+// the backend requires a deadline in the future, so the earliest is tomorrow
+function tomorrow() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toLocaleDateString("en-CA"); // local date as YYYY-MM-DD
+}
 
 function InternshipsPage() {
+  const { user } = useAuth();
+  const isStudent = user.role === "STUDENT";
+  const isCompany = user.role === "COMPANY";
+
   const [offers, setOffers] = useState([]);
-  const [companyIdFilter, setCompanyIdFilter] = useState("");
+  const [workTypes, setWorkTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [filters, setFilters] = useState(emptyFilters);
 
-  // apply form (shown when the user clicks "Apply" on an offer)
-  const [applyOffer, setApplyOffer] = useState(null);
-  const [studentId, setStudentId] = useState("");
+  // student: the offer currently being applied to
+  const [applyOfferId, setApplyOfferId] = useState(null);
   const [motivationLetter, setMotivationLetter] = useState("");
 
-  // applications of one offer (shown when the user clicks "Applications")
-  const [applicationsOffer, setApplicationsOffer] = useState(null);
-  const [offerApplications, setOfferApplications] = useState([]);
+  // company: create / edit form (editingId is null when creating)
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [form, setForm] = useState(emptyOffer);
 
-  // create offer form
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [requiredSkills, setRequiredSkills] = useState("");
-  const [location, setLocation] = useState("");
-  const [type, setType] = useState("ON_SITE");
-  const [deadline, setDeadline] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [workTypes, setWorkTypes] = useState([]);
-  const { user } = useAuth();
-  const isAdmin = user?.role === "ADMIN";
-  const isStudent = user?.role === "STUDENT";
-  const isCompany = user?.role === "COMPANY";
+  // increase this number to load the offers again (e.g. after a change)
+  const [reloadCount, setReloadCount] = useState(0);
 
-  const loadOffers = async (filterCompanyId) => {
-    try {
-      const response = await api.getInternships(filterCompanyId);
-      setOffers(response.data);
-      setError("");
-    } catch (error) {
-      handleLogError(error);
-      setError(getErrorMessage(error, "Could not load internships."));
-    }
-  };
-
+  // companies only see their own offers; students and admins see all
   useEffect(() => {
-    async function fetchOffers() {
+    async function loadOffers() {
       try {
-        const response = await api.getInternships();
+        const response = isCompany
+          ? await api.getMyInternships()
+          : await api.getInternships();
         setOffers(response.data);
       } catch (error) {
         handleLogError(error);
         setError(getErrorMessage(error, "Could not load internships."));
+      } finally {
+        setLoading(false);
       }
     }
-    fetchOffers();
-  }, []);
+    loadOffers();
+  }, [isCompany, reloadCount]);
+
+  const reload = () => setReloadCount((count) => count + 1);
 
   useEffect(() => {
-    async function fetchWorkTypes() {
-      try {
-        const response = await api.getWorkTypes();
-        setWorkTypes(response.data);
-      } catch (error) {
-        handleLogError(error);
-      }
-    }
-    fetchWorkTypes();
+    api
+      .getWorkTypes()
+      .then((response) => setWorkTypes(response.data))
+      .catch(handleLogError);
   }, []);
 
-  const handleFilter = (e) => {
+  const showResult = (successText, errorText) => {
+    setMessage(successText || "");
+    setError(errorText || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // students only see active offers; everyone can use the filters
+  const visibleOffers = offers.filter(
+    (offer) =>
+      (!isStudent || offer.status === "ACTIVE") &&
+      (contains(offer.title, filters.keyword) ||
+        contains(offer.description, filters.keyword) ||
+        contains(offer.companyName, filters.keyword)) &&
+      contains(offer.location, filters.city) &&
+      (!filters.type || offer.type === filters.type) &&
+      contains(offer.requiredSkills, filters.skill),
+  );
+
+  const handleFilterChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
+
+  const handleFormChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // ---- student actions
+
+  const handleApply = async (e, offer) => {
     e.preventDefault();
-    loadOffers(companyIdFilter || undefined);
+    try {
+      await api.createApplication({
+        internshipOfferId: offer.id,
+        motivationLetter,
+      });
+      setApplyOfferId(null);
+      setMotivationLetter("");
+      showResult(
+        `Applied to "${offer.title}". You can follow its status on the Applications page.`,
+      );
+    } catch (error) {
+      handleLogError(error);
+      showResult(null, getErrorMessage(error, "Could not apply."));
+    }
+  };
+
+  // ---- company actions
+
+  const startCreate = () => {
+    setEditingId(null);
+    setForm(emptyOffer);
+    setShowForm(true);
+  };
+
+  const startEdit = (offer) => {
+    setEditingId(offer.id);
+    setForm({
+      title: offer.title,
+      description: offer.description || "",
+      requiredSkills: offer.requiredSkills || "",
+      location: offer.location || "",
+      type: offer.type,
+      deadline: offer.deadline || "",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(emptyOffer);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingId) {
+        await api.updateInternship(editingId, form);
+        showResult(`Offer "${form.title}" updated.`);
+      } else {
+        await api.createInternship(form);
+        showResult(`Offer "${form.title}" created.`);
+      }
+      closeForm();
+      reload();
+    } catch (error) {
+      handleLogError(error);
+      showResult(null, getErrorMessage(error, "Could not save offer."));
+    }
   };
 
   const handleDelete = async (offer) => {
-    setError("");
-    setMessage("");
+    if (!window.confirm(`Delete the offer "${offer.title}"?`)) {
+      return;
+    }
     try {
       await api.deleteInternship(offer.id);
-      setMessage(`Offer "${offer.title}" deleted.`);
-      loadOffers(companyIdFilter || undefined);
+      showResult(`Offer "${offer.title}" deleted.`);
+      reload();
     } catch (error) {
       handleLogError(error);
-      setError(getErrorMessage(error, "Could not delete offer."));
-    }
-  };
-
-  const handleShowApplications = async (offer) => {
-    setError("");
-    setApplyOffer(null);
-    try {
-      const response = await api.getOfferApplications(offer.id);
-      setApplicationsOffer(offer);
-      setOfferApplications(response.data);
-    } catch (error) {
-      handleLogError(error);
-      setError(getErrorMessage(error, "Could not load applications."));
-    }
-  };
-
-  const handleApply = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-
-    if (!studentId) {
-      setError("Student profile id is required to apply.");
-      return;
-    }
-
-    try {
-      await api.createApplication({
-        studentId: Number(studentId),
-        internshipOfferId: applyOffer.id,
-        motivationLetter,
-      });
-      setMessage(`Applied to "${applyOffer.title}".`);
-      setApplyOffer(null);
-      setStudentId("");
-      setMotivationLetter("");
-    } catch (error) {
-      handleLogError(error);
-      setError(getErrorMessage(error, "Could not apply."));
-    }
-  };
-
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-
-    if (!(title && companyId)) {
-      setError("Title and company id are required.");
-      return;
-    }
-
-    try {
-      await api.createInternship({
-        title,
-        description,
-        requiredSkills,
-        location,
-        type,
-        deadline: deadline || null,
-        companyId: Number(companyId),
-      });
-      setMessage(`Offer "${title}" created.`);
-      setTitle("");
-      setDescription("");
-      setRequiredSkills("");
-      setLocation("");
-      setType("ON_SITE");
-      setDeadline("");
-      setCompanyId("");
-      loadOffers(companyIdFilter || undefined);
-    } catch (error) {
-      handleLogError(error);
-      setError(getErrorMessage(error, "Could not create offer."));
+      showResult(null, getErrorMessage(error, "Could not delete offer."));
     }
   };
 
   return (
     <div className="page">
-      <h1>Internships</h1>
+      <div className="page-header">
+        <div>
+          <h1>{isCompany ? "My internship offers" : "Internship offers"}</h1>
+          <p className="page-subtitle">
+            {isStudent && "Find an internship that fits you and apply with a short motivation letter."}
+            {isCompany && "Create and manage the internships your company offers."}
+            {!isStudent && !isCompany && "All internship offers published on the platform."}
+          </p>
+        </div>
+        {isCompany && !showForm && <button onClick={startCreate}>New offer</button>}
+      </div>
 
       {error && <p className="error">{error}</p>}
       {message && <p className="success">{message}</p>}
 
-      <form className="form-inline" onSubmit={handleFilter}>
-        <label>
-          Filter by company id
-          <input
-            type="number"
-            value={companyIdFilter}
-            onChange={(e) => setCompanyIdFilter(e.target.value)}
-          />
-        </label>
-        <button type="submit">Load</button>
-        <button
-          type="button"
-          onClick={() => {
-            setCompanyIdFilter("");
-            loadOffers();
-          }}
-        >
-          Clear
-        </button>
-      </form>
-
-      <h2>All offers</h2>
-      {offers.length === 0 ? (
-        <p>No internship offers yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Id</th>
-              <th>Title</th>
-              <th>Company</th>
-              <th>Location</th>
-              <th>Type</th>
-              <th>Deadline</th>
-              <th>Status</th>
-              <th>Required skills</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {offers.map((offer) => (
-              <tr key={offer.id}>
-                <td>{offer.id}</td>
-                <td>{offer.title}</td>
-                <td>
-                  {offer.companyName} (#{offer.companyId})
-                </td>
-                <td>{offer.location}</td>
-                <td>{offer.type}</td>
-                <td>{offer.deadline}</td>
-                <td>{offer.status}</td>
-                <td>{offer.requiredSkills}</td>
-                <td className="actions">
-                  {isStudent && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setApplicationsOffer(null);
-                          setApplyOffer(offer);
-                        }}
-                      >
-                        Apply
-                      </button>
-                    </>
-                  )}
-
-                  {isCompany && (
-                    <>
-                      <button onClick={() => handleDelete(offer)}>
-                        Delete
-                      </button>
-                      <button onClick={() => handleShowApplications(offer)}>
-                        Applications
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {applyOffer && (
-        <>
-          <h2>
-            Apply to &quot;{applyOffer.title}&quot; (offer #{applyOffer.id})
-          </h2>
-          <form className="form" onSubmit={handleApply}>
+      {isCompany && showForm && (
+        <section className="card">
+          <h2>{editingId ? "Edit offer" : "New offer"}</h2>
+          <form className="form" onSubmit={handleSave}>
             <label>
-              Student profile id
-              <input
-                type="number"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
-              />
+              Title
+              <input name="title" value={form.title} onChange={handleFormChange} required />
             </label>
             <label>
-              Motivation letter
+              Description
               <textarea
+                name="description"
                 rows="4"
-                value={motivationLetter}
-                onChange={(e) => setMotivationLetter(e.target.value)}
+                value={form.description}
+                onChange={handleFormChange}
+                required
               />
             </label>
+            <label>
+              Required skills (comma separated)
+              <input
+                name="requiredSkills"
+                placeholder="Java, Spring, SQL"
+                value={form.requiredSkills}
+                onChange={handleFormChange}
+                required
+              />
+            </label>
+            <div className="form-row">
+              <label>
+                Location
+                <input
+                  name="location"
+                  value={form.location}
+                  onChange={handleFormChange}
+                  required
+                />
+              </label>
+              <label>
+                Work type
+                <select name="type" value={form.type} onChange={handleFormChange}>
+                  {workTypes.map((w) => (
+                    <option key={w.value} value={w.value}>
+                      {w.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Deadline
+                <input
+                  type="date"
+                  name="deadline"
+                  min={tomorrow()}
+                  value={form.deadline}
+                  onChange={handleFormChange}
+                  required
+                />
+              </label>
+            </div>
             <div className="form-buttons">
-              <button type="submit">Submit application</button>
-              <button type="button" onClick={() => setApplyOffer(null)}>
+              <button type="submit">{editingId ? "Save changes" : "Create offer"}</button>
+              <button type="button" className="btn-secondary" onClick={closeForm}>
                 Cancel
               </button>
             </div>
           </form>
-        </>
+        </section>
       )}
 
-      {applicationsOffer && (
-        <>
-          <h2>
-            Applications for &quot;{applicationsOffer.title}&quot; (offer #
-            {applicationsOffer.id})
-          </h2>
-          {offerApplications.length === 0 ? (
-            <p>No applications for this offer.</p>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Id</th>
-                  <th>Student id</th>
-                  <th>Faculty number</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Motivation letter</th>
-                </tr>
-              </thead>
-              <tbody>
-                {offerApplications.map((application) => (
-                  <tr key={application.id}>
-                    <td>{application.id}</td>
-                    <td>{application.studentId}</td>
-                    <td>{application.studentFacultyNumber}</td>
-                    <td>{application.applicationDate}</td>
-                    <td>{application.status}</td>
-                    <td>{application.motivationLetter}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <button onClick={() => setApplicationsOffer(null)}>Close</button>
-        </>
+      {!isCompany && (
+        <div className="toolbar">
+          <input
+            type="search"
+            name="keyword"
+            placeholder="Search by title, company or description"
+            value={filters.keyword}
+            onChange={handleFilterChange}
+          />
+          <input
+            name="city"
+            placeholder="City"
+            value={filters.city}
+            onChange={handleFilterChange}
+          />
+          <select name="type" value={filters.type} onChange={handleFilterChange}>
+            <option value="">Any work type</option>
+            {workTypes.map((w) => (
+              <option key={w.value} value={w.value}>
+                {w.label}
+              </option>
+            ))}
+          </select>
+          <input
+            name="skill"
+            placeholder="Skill, e.g. Java"
+            value={filters.skill}
+            onChange={handleFilterChange}
+          />
+          <button className="btn-text" onClick={() => setFilters(emptyFilters)}>
+            Clear filters
+          </button>
+        </div>
       )}
-      {isAdmin && (
+
+      {loading ? (
+        <p className="muted">Loading…</p>
+      ) : visibleOffers.length === 0 ? (
+        <p className="empty">
+          {offers.length === 0 ? "No internship offers yet." : "No offers match your filters."}
+        </p>
+      ) : (
         <>
-          <h2>Create offer</h2>
-          <form className="form" onSubmit={handleCreate}>
-            <label>
-              Title
-              <input value={title} onChange={(e) => setTitle(e.target.value)} />
-            </label>
-            <label>
-              Description
-              <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </label>
-            <label>
-              Required skills
-              <input
-                value={requiredSkills}
-                onChange={(e) => setRequiredSkills(e.target.value)}
-              />
-            </label>
-            <label>
-              Location
-              <input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-            </label>
-            <label>
-              Work type
-              <select value={type} onChange={(e) => setType(e.target.value)}>
-                {workTypes.map((w) => (
-                  <option key={w.value} value={w.value}>
-                    {w.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Deadline
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-              />
-            </label>
-            <label>
-              Company id
-              <input
-                type="number"
-                value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
-              />
-            </label>
-            <button type="submit">Create</button>
-          </form>
+          <p className="result-count">
+            {visibleOffers.length} {visibleOffers.length === 1 ? "offer" : "offers"}
+          </p>
+          <div className="offer-grid">
+            {visibleOffers.map((offer) => (
+              <article className="offer-card" key={offer.id}>
+                <div className="offer-head">
+                  <div>
+                    <h3>{offer.title}</h3>
+                    <div className="offer-company">
+                      {offer.companyName} · {offer.location}
+                    </div>
+                  </div>
+                  {/* students only see active offers, so the badge is only useful for the others */}
+                  {!isStudent && <StatusBadge value={offer.status} />}
+                </div>
+
+                {offer.description && (
+                  <p className="offer-description">{offer.description}</p>
+                )}
+
+                {offer.requiredSkills && (
+                  <div className="chips">
+                    {offer.requiredSkills.split(",").map((skill) => (
+                      <span className="chip" key={skill}>
+                        {skill.trim()}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {isStudent && applyOfferId === offer.id ? (
+                  <form className="form apply-form" onSubmit={(e) => handleApply(e, offer)}>
+                    <label>
+                      Motivation letter
+                      <textarea
+                        rows="4"
+                        placeholder="Why are you a good fit for this internship?"
+                        value={motivationLetter}
+                        onChange={(e) => setMotivationLetter(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                    </label>
+                    <div className="form-buttons">
+                      <button type="submit">Send application</button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() => setApplyOfferId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="offer-footer">
+                    <span className="offer-meta">
+                      {formatEnum(offer.type)} · Apply by {formatDate(offer.deadline)}
+                    </span>
+                    {isStudent && (
+                      <button
+                        className="btn-small"
+                        onClick={() => {
+                          setApplyOfferId(offer.id);
+                          setMotivationLetter("");
+                        }}
+                      >
+                        Apply
+                      </button>
+                    )}
+                    {isCompany && (
+                      <div className="form-buttons">
+                        <button className="btn-small btn-secondary" onClick={() => startEdit(offer)}>
+                          Edit
+                        </button>
+                        <button className="btn-small btn-danger" onClick={() => handleDelete(offer)}>
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
         </>
       )}
     </div>
