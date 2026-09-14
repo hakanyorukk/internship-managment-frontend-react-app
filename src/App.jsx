@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import CompaniesPage from "./pages/CompaniesPage";
 import InternshipsPage from "./pages/InternshipsPage";
 import ApplicationsPage from "./pages/ApplicationsPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   return (
@@ -48,8 +49,19 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <ProfilePage />
+              </PrivateRoute>
+            }
+          />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        <footer className="footer">
+          SIT Internship Management · Technical University of Varna
+        </footer>
       </Router>
     </AuthProvider>
   );

@@ -5,10 +5,16 @@ Built with Vite, React Router and axios — plain CSS, no UI library.
 
 ## Pages
 
-- `/login`, `/register` — auth against `POST /api/auth/login` and `POST /api/auth/register`
-- `/companies` — list and create companies
-- `/internships` — list/filter/create/delete offers, apply to an offer, view an offer's applications
-- `/applications` — list all applications (or filter by student profile id), update status + comment
+Every page shows only what the logged-in role is allowed to do (the backend checks it too).
+
+| Page | STUDENT | COMPANY | ADMIN |
+|---|---|---|---|
+| `/internships` | browse active offers, search + filter by city / work type / skill, apply | create, edit, delete own offers | see all offers |
+| `/applications` | own applications with status and company comment | applications to own offers, change status + comment | see all applications |
+| `/companies` | list | register own company | accept / reject companies |
+| `/profile` | edit faculty number, specialty, course, skills | — | — |
+
+`/login` and `/register` use `POST /api/auth/login` and `POST /api/auth/register`.
 
 The JWT returned by login is kept in `localStorage` and attached to every request
 as an `Authorization: Bearer <token>` header (see `src/api/client.js`).
@@ -22,9 +28,11 @@ src/
     client.js          axios instance + auth-token interceptor
     index.js           the `api` object (all backend calls)
   pages/               one file per route (HomePage, LoginPage, ...)
-  components/          reusable UI (Navbar, PrivateRoute)
+  components/          reusable UI (Navbar, PrivateRoute, StatusBadge)
   context/             AuthContext
-  lib/                 plain helpers (parseJwt, error handling)
+  lib/                 plain helpers (parseJwt, error messages, formatEnum, formatDate)
+  index.css            colours (CSS variables), buttons, inputs
+  App.css              layout, cards, tables, badges
 ```
 
 ## Run
@@ -42,7 +50,11 @@ setup is needed on the backend.
 
 ## Notes
 
-- The backend JWT contains only the email and expires after 30 minutes; the backend
-  also generates a new signing key on every restart, so log in again after restarting it.
-- Applying to an offer requires an existing `student_profiles` row — the backend has
-  no endpoint to create one yet, so the "Student profile id" is entered manually.
+- The JWT contains the email and role and expires after 30 minutes. The backend creates a
+  new signing key on every restart; when a request gets `401` the app logs you out and
+  opens the login page.
+- A company must be **accepted by an admin** before it can post offers.
+- Search and filters on the internships page run in the browser on the loaded list.
+- Known backend limitations: creating a company and creating/editing an offer currently
+  fail validation (`CompanyRequest.id` and `InternshipOfferRequest.companyId` are required
+  but should not be); there is no endpoint to close an offer or for admin statistics.

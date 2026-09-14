@@ -44,7 +44,7 @@ function RegisterPage() {
         password,
         role,
       });
-      navigate("/login");
+      navigate("/login", { state: { registered: true } });
     } catch (error) {
       handleLogError(error);
       setError(getErrorMessage(error, "Registration failed."));
@@ -56,24 +56,30 @@ function RegisterPage() {
   }
 
   return (
-    <div className="page narrow">
-      <h1>Register</h1>
-      <form className="form" onSubmit={handleSubmit}>
-        <label>
-          First name
-          <input
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            autoFocus
-          />
-        </label>
-        <label>
-          Last name
-          <input
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-          />
-        </label>
+    <div className="page auth-page">
+      <form className="form card" onSubmit={handleSubmit}>
+        <div>
+          <h1>Create an account</h1>
+          <p className="muted">Students apply for internships, companies publish offers.</p>
+        </div>
+        {error && <p className="error">{error}</p>}
+        <div className="form-row">
+          <label>
+            First name
+            <input
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              autoFocus
+            />
+          </label>
+          <label>
+            Last name
+            <input
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+            />
+          </label>
+        </div>
         <label>
           Email
           <input
@@ -86,6 +92,7 @@ function RegisterPage() {
           Password
           <input
             type="password"
+            placeholder="At least 6 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -100,12 +107,11 @@ function RegisterPage() {
             ))}
           </select>
         </label>
-        <button type="submit">Register</button>
+        <button type="submit">Create account</button>
+        <p className="muted small auth-switch">
+          Already have an account? <Link to="/login">Log in</Link>
+        </p>
       </form>
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
-      {error && <p className="error">{error}</p>}
     </div>
   );
 }
