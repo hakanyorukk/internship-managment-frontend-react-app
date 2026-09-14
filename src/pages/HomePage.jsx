@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../api";
+import { handleLogError, getErrorMessage } from "../lib/helpers";
 
 // quick links for each role on the home page
 const roleLinks = {
@@ -25,6 +28,64 @@ const steps = [
   { title: "A student applies", text: "With a short motivation letter, once per offer." },
   { title: "The company reviews it", text: "The student sees the new status and comment right away." },
 ];
+
+// ADMIN: numbers from GET /api/admin/statistics
+function AdminStatistics() {
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api
+      .getStatistics()
+      .then((response) => setStats(response.data))
+      .catch((error) => {
+        handleLogError(error);
+        setError(getErrorMessage(error, "Could not load statistics."));
+      });
+  }, []);
+
+  if (error) {
+    return <p className="error">{error}</p>;
+  }
+  if (!stats) {
+    return <p className="muted">Loading statistics…</p>;
+  }
+
+  const skills = Object.entries(stats.topSkills);
+
+  return (
+    <>
+      <div className="stat-grid">
+        <div className="stat-card">
+          <span>Active offers</span>
+          <strong>{stats.totalActiveOffers}</strong>
+        </div>
+        <div className="stat-card">
+          <span>Applications</span>
+          <strong>{stats.totalApplications}</strong>
+        </div>
+        <div className="stat-card">
+          <span>Approved applications</span>
+          <strong>{stats.approvedApplications}</strong>
+        </div>
+      </div>
+      <div className="card">
+        <h2>Most requested skills</h2>
+        {skills.length === 0 ? (
+          <p className="muted">No offers yet.</p>
+        ) : (
+          <div className="chips">
+            {skills.map(([skill, count]) => (
+              <span className="chip" key={skill}>
+                {skill} · {count}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
 
 function HomePage() {
   const { user, userIsAuthenticated } = useAuth();
@@ -70,6 +131,7 @@ function HomePage() {
           <p className="page-subtitle">You are logged in as {user.email}.</p>
         </div>
       </div>
+      {user.role === "ADMIN" && <AdminStatistics />}
       <div className="link-grid">
         {(roleLinks[user.role] || []).map((link) => (
           <Link to={link.to} className="link-card" key={link.to}>

@@ -30,6 +30,9 @@ export const api = {
   getMyProfile: () => client.get("/students/me"),
   updateMyProfile: (profile) => client.put("/students/me", profile),
 
+  // -- admin
+  getStatistics: () => client.get("/admin/statistics"),
+
   // -- enums (each returns [{ value, label }])
   getWorkTypes: () => client.get("/enums/work-types"),
   getRoles: () => client.get("/enums/roles"),

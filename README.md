@@ -13,6 +13,7 @@ Every page shows only what the logged-in role is allowed to do (the backend chec
 | `/applications` | own applications with status and company comment | applications to own offers, change status + comment | see all applications |
 | `/companies` | list | register own company | accept / reject companies |
 | `/profile` | edit faculty number, specialty, course, skills | — | — |
+| `/` (home) | quick links | quick links | platform statistics + quick links |
 
 `/login` and `/register` use `POST /api/auth/login` and `POST /api/auth/register`.
 
@@ -57,15 +58,4 @@ setup is needed on the backend.
 - Search and filters on the internships page run in the browser on the loaded list.
 - Known backend limitations: creating a company and creating/editing an offer currently
   fail validation (`CompanyRequest.id` and `InternshipOfferRequest.companyId` are required
-  but should not be); there is no endpoint to close an offer or for admin statistics.
-
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/529dfc42-bb70-4544-a7fd-e7f70fb38e10" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/d2a164d4-74ac-4e2a-a360-33a10f77ba56" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/7efa2ac6-920c-425e-b7ee-cf95152361c7" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/3cdba13b-a94a-4e71-9dd6-69ec8f2d989a" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/2a530175-5091-4b20-a500-86d33b71e2b7" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/9acca51a-1182-45c6-8eca-5932f16dc3d5" />
-<img width="2560" height="1600" alt="image" src="https://github.com/user-attachments/assets/71e0c87e-7728-4243-9d41-04a0d5a5ec01" />
-
-
-  
+  but should not be); there is no endpoint to close an offer.

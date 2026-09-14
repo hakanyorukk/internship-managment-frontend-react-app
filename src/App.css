@@ -513,6 +513,35 @@ details summary {
   color: var(--muted);
 }
 
+/* admin statistics on the home page */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stat-card strong {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
 /* ---------- small screens ---------- */
 
 @media (max-width: 760px) {
